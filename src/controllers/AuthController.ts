@@ -79,4 +79,52 @@ export const AuthController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
+
+  async getProfile(req: Request, res: Response) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+          createdAt: true,
+        },
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      return res.json(user);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  async updateAvatar(req: Request, res: Response) {
+    try {
+      const { avatarUrl } = req.body;
+
+      if (!avatarUrl || typeof avatarUrl !== 'string') {
+        return res.status(400).json({ error: 'Avatar URL is required' });
+      }
+
+      const user = await prisma.user.update({
+        where: { id: req.user.id },
+        data: { avatar: avatarUrl },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatar: true,
+        },
+      });
+
+      return res.json(user);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
 };
