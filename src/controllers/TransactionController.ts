@@ -76,4 +76,31 @@ export const TransactionController = {
       return res.status(500).json({ error: 'Internal server error' });
     }
   },
+
+  async getBalance(req: Request, res: Response) {
+    try {
+      const userId = req.user.id;
+      const transactions = await prisma.transaction.findMany({
+        where: { userId },
+      });
+
+      const income = transactions
+        .filter((t: any) => t.type === 'income')
+        .reduce((acc: number, t: any) => acc + t.amount, 0);
+
+      const outcome = transactions
+        .filter((t: any) => t.type === 'outcome')
+        .reduce((acc: number, t: any) => acc + t.amount, 0);
+
+      const balance = income - outcome;
+
+      return res.json({
+        balance,
+        income,
+        outcome,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  },
 };

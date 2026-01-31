@@ -2,27 +2,33 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
-
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import Database from 'better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 dotenv.config();
 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+
 const app = express();
-const db = new Database('./dev.db');
-const adapter = new PrismaBetterSqlite3(db);
 export const prisma = new PrismaClient({ adapter });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve static files for uploads
+app.use('/uploads', express.static('uploads'));
 
 import { routes as authRoutes } from './routes/auth.routes';
 import { routes as transactionRoutes } from './routes/transaction.routes';
 import { routes as categoryRoutes } from './routes/category.routes';
+import uploadRoutes from './routes/upload.routes';
 
 app.use('/auth', authRoutes);
 app.use('/transactions', transactionRoutes);
 app.use('/categories', categoryRoutes);
+app.use('/upload', uploadRoutes);
 
 const PORT = process.env.PORT || 3333;
 
